@@ -1,0 +1,12 @@
+
+google-generativeai
+fastapi
+uvicorn[standard]
+pandas
+numpy
+joblib
+xgboost
+shap
+scikit-learn==1.6.1
+google-genai
+python-dotenv
