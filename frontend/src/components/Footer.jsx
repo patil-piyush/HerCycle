@@ -10,10 +10,15 @@ const Footer = () => {
           
           {/* Column 1: Brand & Desc */}
           <div>
-            <div className="logo" style={{ marginBottom: '20px', color: '#2D3748' }}>
-              <div className="logo-icon"><FaHeart /></div>
-              <span>PCOS<span style={{ color: 'var(--primary)' }}>mart</span></span>
-            </div>
+            <div className="footer-logo" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <img
+              src="/favicon.png"
+              alt="PCOSmart Logo"
+              style={{ height: '50px', width: 'auto' }}
+            />
+            <span>PCOSmart</span>
+          </div>
+
             <p style={{ color: '#718096', lineHeight: '1.6', marginBottom: '20px' }}>
               Empowering women with AI-powered PCOS screening and personalized health guidance.
             </p>
@@ -62,7 +67,7 @@ const Footer = () => {
             </div>
             <div className="contact-item">
               <FaMapMarkerAlt style={{ marginTop: '4px', color: 'var(--primary)' }} />
-              <span>123 Health Plaza, Medical District, CA 90210</span>
+              <span>123 Health Plaza, Medical District, Pune 90210</span>
             </div>
           </div>
 

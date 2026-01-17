@@ -20,10 +20,14 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
         
-        <Link to="/" className="logo">
-          <div className="logo-icon"><FaHeart /></div>
-          <span>PCOS<span style={{ color: 'var(--primary)' }}>mart</span></span>
-        </Link>
+      <Link to="/" className="logo" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <img
+          src="/favicon.png"
+          alt="PCOSmart Logo"
+        style={{ height: '50px', width: 'auto' }}
+        />
+        <span>PCOS<span style={{ color: 'var(--primary)' }}>mart</span></span>
+      </Link>
 
         <div className="nav-center">
           <div className="nav-links">

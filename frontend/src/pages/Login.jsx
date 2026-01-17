@@ -20,7 +20,13 @@ const Login = () => {
       <div className="login-card">
         
         <div className="login-header">
-          <div className="login-logo-icon"><FaHeart /></div>
+          <div className="login-logo" style={{ textAlign: 'center' }}>
+            <img
+              src="/favicon.png"
+              alt="PCOSmart Logo"
+              style={{ height: '80px', width: 'auto' }}
+            />
+          </div>
           <h2 style={{ fontSize: '2rem', marginBottom: '5px', color: '#2D3748', fontFamily: '"Playfair Display", serif' }}>
             PCOS<span style={{ color: '#D6689C' }}>mart</span>
           </h2>
@@ -34,7 +40,7 @@ const Login = () => {
             <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: '600', color: '#4A5568' }}>Email Address</label>
             <div className="input-wrapper">
               <FaEnvelope className="input-icon-left" />
-              <input type="email" className="input-with-icon" placeholder="jane@example.com" required />
+              <input type="email" className="input-with-icon" placeholder="pranali@example.com" required />
             </div>
           </div>
 

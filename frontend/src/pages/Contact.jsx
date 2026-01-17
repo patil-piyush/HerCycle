@@ -32,11 +32,11 @@ const Contact = () => {
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Your Name</label>
-                <input type="text" className="form-input" placeholder="Jane Doe" />
+                <input type="text" className="form-input" placeholder="Pranali Patil" />
               </div>
               <div className="form-group">
                 <label className="form-label">Email Address</label>
-                <input type="email" className="form-input" placeholder="jane@example.com" />
+                <input type="email" className="form-input" placeholder="pranali@example.com" />
               </div>
             </div>
 
@@ -104,7 +104,7 @@ const Contact = () => {
             <p style={{ color: '#718096', fontSize: '0.9rem', lineHeight: '1.6' }}>
               123 Health Plaza<br />
               Medical District<br />
-              Los Angeles, CA 90210
+              Pune,  90210
             </p>
             <div className="map-placeholder">
               Interactive Map

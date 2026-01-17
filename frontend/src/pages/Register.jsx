@@ -57,7 +57,7 @@ const Register = () => {
               <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: '600', color: '#4A5568' }}>Full Name</label>
               <div className="input-wrapper">
                 <FaUser className="input-icon-left" />
-                <input type="text" className="input-with-icon" placeholder="Jane Doe" />
+                <input type="text" className="input-with-icon" placeholder="Pranali Patil" />
               </div>
             </div>
 
@@ -66,7 +66,7 @@ const Register = () => {
               <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: '600', color: '#4A5568' }}>Email Address</label>
               <div className="input-wrapper">
                 <FaEnvelope className="input-icon-left" />
-                <input type="email" className="input-with-icon" placeholder="jane@example.com" />
+                <input type="email" className="input-with-icon" placeholder="pranali@example.com" />
               </div>
             </div>
 
