@@ -56,7 +56,7 @@ const Home = () => {
       <section className="container" style={{ padding: '80px 20px' }}>
         <div className="section-title">
           <h2>Why Choose PCOSmart?</h2>
-          <p style={{ maxWidth: '600px', margin: '0 auto', color: '#718096' }}>Our comprehensive approach combines cutting-edge AI technology with medical expertise.</p>
+          <p style={{ maxWidth: '600px', margin: '0', color: '#718096', marginBottom: '20px' }}>Our comprehensive approach combines cutting-edge AI technology with medical expertise.</p>
         </div>
         <div className="features-grid">
           <div className="card">
@@ -82,7 +82,7 @@ const Home = () => {
         <div className="container">
           <div className="section-title">
             <h2>How It Works</h2>
-            <p style={{ color: '#718096' }}>Get your personalized PCOS assessment in just four simple steps</p>
+            <p style={{ color: '#718096', marginBottom: '50px' }}>Get your personalized PCOS assessment in just four simple steps</p>
           </div>
           <div className="steps-grid">
             <div>

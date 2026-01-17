@@ -1,77 +1,118 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaSignInAlt, FaHeart } from 'react-icons/fa';
-import { useAuth } from '../context/AuthContext'; 
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  FaEnvelope,
+  FaLock,
+  FaEye,
+  FaEyeSlash,
+  FaSignInAlt,
+} from "react-icons/fa";
+import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth(); // Get login function
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
-    e.preventDefault(); // Stop form refresh
-    // Simulate API call
-    login(); 
-    navigate('/'); // Redirect to Home
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_API_URL}/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user)); 
+      login(data.user);
+      navigate("/");
+    } catch (error) {
+      console.error("Login error:", error.message);
+      alert(error.message);
+    }
   };
 
   return (
     <div className="login-container">
       <div className="login-card">
-        
         <div className="login-header">
-          <div className="login-logo" style={{ textAlign: 'center' }}>
+          <div className="login-logo" style={{ textAlign: "center" }}>
             <img
               src="/favicon.png"
               alt="PCOSmart Logo"
-              style={{ height: '80px', width: 'auto' }}
+              style={{ height: "80px" }}
             />
           </div>
-          <h2 style={{ fontSize: '2rem', marginBottom: '5px', color: '#2D3748', fontFamily: '"Playfair Display", serif' }}>
-            PCOS<span style={{ color: '#D6689C' }}>mart</span>
+
+          <h2 style={{ fontSize: "2rem" }}>
+            PCOS<span style={{ color: "#D6689C" }}>mart</span>
           </h2>
-          <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '5px' }}>Welcome Back</h3>
-          <p style={{ color: '#718096', fontSize: '0.95rem' }}>Sign in to access your health dashboard</p>
+          <h3>Welcome Back</h3>
+          <p>Sign in to access your health dashboard</p>
         </div>
 
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          
+        <form onSubmit={handleLogin}>
+          {/* EMAIL */}
           <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: '600', color: '#4A5568' }}>Email Address</label>
+            <label>Email Address</label>
             <div className="input-wrapper">
               <FaEnvelope className="input-icon-left" />
-              <input type="email" className="input-with-icon" placeholder="pranali@example.com" required />
-            </div>
-          </div>
-
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <label style={{ fontSize: '0.9rem', fontWeight: '600', color: '#4A5568' }}>Password</label>
-              <Link to="/forgot-password" className="forgot-password-link">Forgot password?</Link>
-            </div>
-            <div className="input-wrapper">
-              <FaLock className="input-icon-left" />
-              <input 
-                type={showPassword ? "text" : "password"} 
-                className="input-with-icon" 
-                placeholder="Enter your password" 
+              <input
+                type="email"
+                className="input-with-icon"
+                placeholder="pranali@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
-              <div className="input-icon-right" onClick={() => setShowPassword(!showPassword)}>
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </div>
             </div>
           </div>
 
-          <button type="submit" className="btn-register-full" style={{ marginTop: '10px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
+          {/* PASSWORD */}
+          <div>
+            <label>Password</label>
+            <div className="input-wrapper">
+              <FaLock className="input-icon-left" />
+              <input
+                type={showPassword ? "text" : "password"}
+                className="input-with-icon"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <span
+                className="input-icon-right"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </span>
+            </div>
+          </div>
+
+          <button type="submit" className="btn-register-full">
             <FaSignInAlt /> Sign In
           </button>
 
-          <p style={{ textAlign: 'center', marginTop: '10px', color: '#718096', fontSize: '0.95rem' }}>
-            Don't have an account? <Link to="/register" style={{ color: '#D6689C', fontWeight: '600' }}>Create one</Link>
+          <p>
+            Don't have an account?{" "}
+            <Link to="/register">Create one</Link>
           </p>
         </form>
-
       </div>
     </div>
   );
