@@ -7,6 +7,7 @@ const {
   getHistoryImageModel,
   getHistoryCombinedModel
 } = require(`../controllers/userController`);
+const { getChatbotAiResponse } = require('../controllers/chatbotController');
  
 const router = express.Router();
 
@@ -16,5 +17,6 @@ router.get(`/history/clinicalTextModel`, authMiddleware, getHistoryClinicalTextM
 router.get(`/history/imageModel`, authMiddleware, getHistoryImageModel);
 router.get(`/history/combinedModel`, authMiddleware, getHistoryCombinedModel);
 
+router.post('/pcos-chatbot', authMiddleware, getChatbotAiResponse);
 
 module.exports = router;

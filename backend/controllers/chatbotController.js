@@ -6,7 +6,7 @@ const getChatbotAiResponse = async (req, res) => {
     const genAI = new GoogleGenerativeAI(process.env.CHATBOT_API_KEY);
     
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash", // Keep the working model
+      model: "gemini-2.5-flash", 
       systemInstruction: {
         parts: [{ 
           text: `You are Cora, a PCOS Assistant. 
@@ -22,7 +22,7 @@ const getChatbotAiResponse = async (req, res) => {
     const chat = model.startChat({
       history: Array.isArray(history) && history.length > 0 ? history : [],
       generationConfig: {
-        maxOutputTokens: 150, // 🟢 LIMITS THE LENGTH PHYSICALLY
+        maxOutputTokens: 150, 
         temperature: 0.7,
       },
     });
@@ -32,7 +32,7 @@ const getChatbotAiResponse = async (req, res) => {
     
     res.status(200).json({ text: response.text() });
   } catch (error) {
-    console.error("❌ CHATBOT ERROR:", error.message);
+    console.error("CHATBOT ERROR:", error.message);
     res.status(500).json({ error: "Service busy, please try again." });
   }
 };

@@ -19,7 +19,7 @@ const Footer = () => {
             <span>PCOSmart</span>
           </div>
 
-            <p style={{ color: '#718096', lineHeight: '1.6', marginBottom: '20px' }}>
+            <p style={{ color: '#718096', lineHeight: '1.6', marginBottom: '20px', marginTop: '15px' }}>
               Empowering women with AI-powered PCOS screening and personalized health guidance.
             </p>
             <div className="flex gap-10">

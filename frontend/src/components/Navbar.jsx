@@ -8,7 +8,6 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // ✅ also read user from context
   const { isLoggedIn, logout, user } = useAuth();
 
   const isActive = (path) => (location.pathname === path ? "nav-link-active" : "");
@@ -21,7 +20,6 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <div
-        className="container"
         style={{
           display: "flex",
           alignItems: "center",
@@ -32,7 +30,7 @@ const Navbar = () => {
         <Link to="/" className="logo" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <img src="/favicon.png" alt="PCOSmart Logo" style={{ height: "50px", width: "auto" }} />
           <span>
-            PCOS<span style={{ color: "var(--primary)" }}>mart</span>
+            PCOS<span style={{ color: "var(--primary)"}}>mart</span>
           </span>
         </Link>
 

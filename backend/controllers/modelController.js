@@ -142,8 +142,6 @@ const sendDataToSimpleTextModel = async (req, res) => {
 };
 
 
-// Takes clinical form data from frontend, saves it, sends payload to ML service, returns ML output.
-
 const sendDataToClinicalTextModel = async (req, res) => {
   try {
     const {
@@ -177,8 +175,7 @@ const sendDataToClinicalTextModel = async (req, res) => {
       randomBloodSugar,
     } = req.body;
 
-    // For clinical, you can enforce labs required OR allow nulls.
-    // Here: basic fields required, labs optional (we send nulls if missing).
+   
     const requiredBasic = {
       age,
       bmi,
