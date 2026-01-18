@@ -1,6 +1,10 @@
 const axios = require("axios");
-const SimpleDataTest = require("../models/SimpleDataTest"); 
-const ClinicalDataTest = require("../models/ClinicalDataTest"); 
+const cloudinary = require("../config/cloudinary");
+const SimpleDataTest = require("../models/SimpleDataTest");
+const ClinicalDataTest = require("../models/ClinicalDataTest");
+const ImageTest = require("../models/ImageDataTest");
+const FormData = require("form-data");
+const { generatePredictionPdfBuffer } = require("./pdfGenerator");
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL;
 
 // Helper: convert boolean-ish values to 0/1 
@@ -78,7 +82,7 @@ const sendDataToSimpleTextModel = async (req, res) => {
 
     // Save input in Mongo
     const saved = await SimpleDataTest.create({
-      userId: req.user?._id, 
+      userId: req.user?._id,
       age: Number(age),
       bmi: Number(bmi),
       pulseRate: Number(pulseRate),
@@ -123,14 +127,53 @@ const sendDataToSimpleTextModel = async (req, res) => {
     });
 
     // Save ML output
-    saved.modelOutput = mlResponse.data; 
+    saved.modelOutput = mlResponse.data;
     await saved.save();
+
+    // report generation
+    let reportPdfBase64 = null;
+    let reportFilename = null;
+
+    try {
+      const pdfBuffer = await generatePredictionPdfBuffer({
+        inputMode: "simple",
+        submissionId: saved._id.toString(),
+        mlResult: mlResponse.data,
+        inputSnapshot: {
+          age: saved.age,
+          bmi: saved.bmi,
+          pulseRate: saved.pulseRate,
+          respiratoryRate: saved.respiratoryRate,
+          hemoglobin: saved.hemoglobin,
+          menstrualCycleType: saved.menstrualCycleType,
+          averageCycleLength: saved.averageCycleLength,
+          bpSystolic: saved.bpSystolic,
+          bpDiastolic: saved.bpDiastolic,
+          weightGain: saved.weightGain,
+          hairGrowth: saved.hairGrowth,
+          skinDarkening: saved.skinDarkening,
+          hairLoss: saved.hairLoss,
+          pimples: saved.pimples,
+          fastFood: saved.fastFood,
+          regularExercise: saved.regularExercise,
+        },
+      });
+
+      reportPdfBase64 = pdfBuffer.toString("base64");
+      reportFilename = `PCOSmart_simple_${saved._id}.pdf`;
+    } catch (e) {
+      console.error("PDF generation failed (simple):", e.message);
+    }
+
 
     return res.status(200).json({
       message: "Prediction completed",
       submissionId: saved._id,
       inputMode: "simple",
       mlResult: mlResponse.data,
+      report: reportPdfBase64
+        ? { filename: reportFilename, mimeType: "application/pdf", base64: reportPdfBase64 }
+        : null,
     });
   } catch (err) {
     console.error("sendDataToSimpleTextModel error:", err?.response?.data || err.message);
@@ -175,7 +218,7 @@ const sendDataToClinicalTextModel = async (req, res) => {
       randomBloodSugar,
     } = req.body;
 
-   
+
     const requiredBasic = {
       age,
       bmi,
@@ -214,7 +257,7 @@ const sendDataToClinicalTextModel = async (req, res) => {
 
     // Save input in Mongo 
     const saved = await ClinicalDataTest.create({
-      userId: req.user?._id, 
+      userId: req.user?._id,
       age: Number(age),
       bmi: Number(bmi),
       pulseRate: Number(pulseRate),
@@ -288,14 +331,70 @@ const sendDataToClinicalTextModel = async (req, res) => {
     });
 
     // Save ML output
-    saved.modelOutput = mlResponse.data; 
+    saved.modelOutput = mlResponse.data;
     await saved.save();
+
+
+
+    let reportPdfBase64 = null;
+    let reportFilename = null;
+
+    try {
+      const pdfBuffer = await generatePredictionPdfBuffer({
+        inputMode: "clinical",
+        submissionId: saved._id.toString(),
+        mlResult: mlResponse.data,
+        inputSnapshot: {
+          age: saved.age,
+          bmi: saved.bmi,
+          pulseRate: saved.pulseRate,
+          respiratoryRate: saved.respiratoryRate,
+          hemoglobin: saved.hemoglobin,
+          menstrualCycleType: saved.menstrualCycleType,
+          averageCycleLength: saved.averageCycleLength,
+          bpSystolic: saved.bpSystolic,
+          bpDiastolic: saved.bpDiastolic,
+
+          weightGain: saved.weightGain,
+          hairGrowth: saved.hairGrowth,
+          skinDarkening: saved.skinDarkening,
+          hairLoss: saved.hairLoss,
+          pimples: saved.pimples,
+          fastFood: saved.fastFood,
+          regularExercise: saved.regularExercise,
+
+          // labs (include if you want)
+          betaHcg1: saved.betaHcg1,
+          betaHcg2: saved.betaHcg2,
+          fsh: saved.fsh,
+          lh: saved.lh,
+          fshLhRatio: saved.fshLhRatio,
+          tsh: saved.tsh,
+          amh: saved.amh,
+          prolactin: saved.prolactin,
+          vitaminD3: saved.vitaminD3,
+          progesterone: saved.progesterone,
+          rbs: saved.rbs,
+        },
+      });
+
+      reportPdfBase64 = pdfBuffer.toString("base64");
+      reportFilename = `PCOSmart_clinical_${saved._id}.pdf`;
+    } catch (e) {
+      console.error("PDF generation failed (clinical):", e.message);
+    }
+
+
+
 
     return res.status(200).json({
       message: "Prediction completed",
       submissionId: saved._id,
       inputMode: "clinical",
       mlResult: mlResponse.data,
+      report: reportPdfBase64
+        ? { filename: reportFilename, mimeType: "application/pdf", base64: reportPdfBase64 }
+        : null,
     });
   } catch (err) {
     console.error("sendDataToClinicalTextModel error:", err?.response?.data || err.message);
@@ -306,4 +405,101 @@ const sendDataToClinicalTextModel = async (req, res) => {
   }
 };
 
-module.exports = { sendDataToSimpleTextModel, sendDataToClinicalTextModel };
+const uploadBufferToCloudinary = (buffer, options = {}) =>
+  new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { resource_type: "image", ...options },
+      (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      }
+    );
+    stream.end(buffer);
+  });
+
+const sendImageToImageModel = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "Image file is required (field name: image)" });
+    }
+    if (!ML_SERVICE_URL) {
+      return res.status(500).json({ message: "ML_SERVICE_URL not set in environment" });
+    }
+
+    // 1) Upload original image to Cloudinary
+    const uploaded = await uploadBufferToCloudinary(req.file.buffer, {
+      folder: "pcosmart/ultrasound",
+    });
+
+    // 2) Call ML service (/predict/image) with same image bytes
+    const form = new FormData();
+    form.append("image", req.file.buffer, {
+      filename: req.file.originalname,
+      contentType: req.file.mimetype,
+    });
+
+    const mlResponse = await axios.post(`${ML_SERVICE_URL}/predict/image`, form, {
+      headers: form.getHeaders(),
+      timeout: 30000,
+    });
+
+    // 3) Save to Mongo
+    const saved = await ImageTest.create({
+      userId: req.user?._id,
+      imageUrl: uploaded.secure_url,
+      imagePublicId: uploaded.public_id,
+      originalName: req.file.originalname,
+      mimeType: req.file.mimetype,
+      size: req.file.size,
+      modelOutput: mlResponse.data,
+    });
+
+
+    let reportPdfBase64 = null;
+    let reportFilename = null;
+
+    try {
+      const pdfBuffer = await generatePredictionPdfBuffer({
+        inputMode: "image",
+        submissionId: saved._id.toString(),
+        mlResult: mlResponse.data,
+        imageUrl: saved.imageUrl,
+        inputSnapshot: {
+          imageUrl: saved.imageUrl,
+          originalName: saved.originalName,
+        },
+      });
+
+      reportPdfBase64 = pdfBuffer.toString("base64");
+      reportFilename = `PCOSmart_image_${saved._id}.pdf`;
+    } catch (e) {
+      console.error("PDF generation failed (image):", e.message);
+    }
+
+
+    // 4) Return to frontend (same structure style as text controllers)
+    return res.status(200).json({
+      message: "Prediction completed",
+      submissionId: saved._id,
+      inputMode: "image",
+      imageUrl: saved.imageUrl,
+      mlResult: mlResponse.data,
+      report: reportPdfBase64
+        ? { filename: reportFilename, mimeType: "application/pdf", base64: reportPdfBase64 }
+        : null,
+    });
+  } catch (err) {
+    console.error("sendImageToImageModel error:", err?.response?.data || err.message);
+    return res.status(500).json({
+      message: "Failed to process image model request",
+      error: err?.response?.data || err.message,
+    });
+  }
+};
+
+
+module.exports = {
+  sendDataToSimpleTextModel,
+  sendDataToClinicalTextModel,
+  sendImageToImageModel
+};

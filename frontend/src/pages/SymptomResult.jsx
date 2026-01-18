@@ -23,8 +23,25 @@ const SymptomResult = () => {
     riskLevel === "Low"
       ? "risk-low"
       : riskLevel === "High"
-      ? "risk-high"
-      : "risk-moderate";
+        ? "risk-high"
+        : "risk-moderate";
+
+
+  const downloadPdfFromBase64 = (base64, filename) => {
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+
+    const blob = new Blob([new Uint8Array(byteNumbers)], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename || "PCOSmart_Report.pdf";
+    a.click();
+
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="container page-spacing" style={{ maxWidth: "1000px" }}>
@@ -156,7 +173,11 @@ const SymptomResult = () => {
 
         <button
           className="btn btn-outline"
-          onClick={() => alert("Report Downloading...")}
+          onClick={() => {
+            const report = mlResult?.report;
+            if (!report?.base64) alert("Report not available");
+            else downloadPdfFromBase64(report.base64, report.filename);
+          }}
         >
           <FaDownload /> Download Report
         </button>

@@ -2,18 +2,32 @@ import os, json
 import numpy as np
 import pandas as pd
 from joblib import load
-
 import shap
 import google.generativeai as genai
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
+#image 
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torchvision import models, transforms
+from PIL import Image
+import io
+from fastapi import UploadFile, File, HTTPException
+
 load_dotenv()
 
-ART_DIR = "artifacts"
-
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ART_DIR = os.path.join(BASE_DIR, "artifacts")
 app = FastAPI(title="PCOSmart Text ML Service", version="1.0")
+
+
+image_torch_model = None
+image_transform = None
+IMAGE_DEVICE = "cpu"   # keep CPU for Windows reliability
+
 
 # CORS (allow your React/Node to call it)
 app.add_middleware(
@@ -127,12 +141,40 @@ Write 5-8 lines:
     resp = model.generate_content(prompt)
     return (resp.text or "").strip()
 
+
+def build_resnet18_2class():
+    m = models.resnet18(weights=None)  # no download
+    num_ftrs = m.fc.in_features
+    m.fc = nn.Linear(num_ftrs, 2)
+    return m
+
+
+def gemini_narration_image(probability: float) -> str:
+    lvl = risk_level(probability)
+
+    prompt = f"""
+You are a health education assistant. Do NOT diagnose.
+Explain a PCOS screening result based on ultrasound image analysis.
+
+Risk probability: {probability:.2f} (Risk level: {lvl})
+
+Write 5-8 lines:
+- Explain this is a screening estimate, not diagnosis
+- Suggest consulting a clinician for confirmation
+- Avoid medicines/prescriptions
+"""
+    model = genai.GenerativeModel("models/gemini-flash-latest")
+    resp = model.generate_content(prompt)
+    return (resp.text or "").strip()
+
 # ---- Startup ----
 @app.on_event("startup")
 def startup():
     global simple_pipe, clinical_pipe
     global simple_schema, clinical_schema, risk_thresholds
     global simple_explainer, clinical_explainer, simple_feature_names, clinical_feature_names
+    global image_torch_model, image_transform
+    
 
     # Configure Gemini
     api_key = os.getenv("GEMINI_API_KEY")
@@ -161,6 +203,21 @@ def startup():
     # Build explainers
     simple_explainer, simple_feature_names = make_shap_explainer(simple_pipe, simple_bg)
     clinical_explainer, clinical_feature_names = make_shap_explainer(clinical_pipe, clinical_bg)
+
+    pt_path = os.path.join(ART_DIR, "pcos_resnet_model.pt")
+    if not os.path.exists(pt_path):
+        raise RuntimeError(f"pcos_resnet_model.pt not found at: {pt_path}")
+
+    image_torch_model = build_resnet18_2class().to(IMAGE_DEVICE)
+    state = torch.load(pt_path, map_location=IMAGE_DEVICE)
+    image_torch_model.load_state_dict(state)
+    image_torch_model.eval()
+
+    image_transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+    ])
 
 @app.get("/health")
 def health():
@@ -192,4 +249,35 @@ def predict_clinical(payload: dict):
         "risk_level": risk_level(p),
         "top_factors": top,
         "narration": narration
+    }
+
+
+@app.post("/predict/image")
+async def predict_image(image: UploadFile = File(...)):
+    if image_torch_model is None or image_transform is None:
+        raise HTTPException(status_code=500, detail="Image model not loaded")
+
+    if not image.content_type or not image.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only image files are allowed")
+
+    contents = await image.read()
+    try:
+        pil_img = Image.open(io.BytesIO(contents)).convert("RGB")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid image file")
+
+    x = image_transform(pil_img).unsqueeze(0).to(IMAGE_DEVICE)  # [1,3,224,224]
+
+    with torch.no_grad():
+        logits = image_torch_model(x)          # [1,2]
+        probs = F.softmax(logits, dim=1)       # [1,2]
+        p_pcos = float(probs[0, 1].item())     # index 1 = PCOS (must match training)
+
+    narration = gemini_narration_image(p_pcos)
+
+    return {
+        "probability": p_pcos,
+        "risk_level": risk_level(p_pcos),
+        "top_factors": [],
+        "narration": narration,
     }

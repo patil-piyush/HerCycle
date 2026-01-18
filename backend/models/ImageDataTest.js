@@ -1,13 +1,19 @@
-const mongoose = require(`mongoose`);
+const mongoose = require("mongoose");
 
-const ImageDataTestSchema = mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    imagePath: { type: String, required: true },
-    modelOutput: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now }
-}, { timestamp: true });
+const ImageTestSchema = new mongoose.Schema(
+  {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 
-const ImageDataTest = mongoose.model(`ImageDataTest`, ImageDataTestSchema);
+    imageUrl: { type: String, required: true },
+    imagePublicId: { type: String, required: true },
 
+    originalName: String,
+    mimeType: String,
+    size: Number,
 
-module.exports = ImageDataTest;
+    modelOutput: mongoose.Schema.Types.Mixed, // stores ML response
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("ImageTest", ImageTestSchema);

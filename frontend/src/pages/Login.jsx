@@ -17,7 +17,7 @@ const Login = () => {
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); 
 
     try {
       const response = await fetch(
